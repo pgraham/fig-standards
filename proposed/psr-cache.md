@@ -39,7 +39,7 @@ a single set of interfaces rather than a whole assortment of adapters.
 when that item is stored and it is considered stale. The TTL is normally defined
 by an integer representing time in seconds.
 
-*    **Expiration** - The actual time when an item is set to go stale. 
+*    **Expiration** - The actual time when an item is set to go stale.
 
     An item with a 300 second TTL stored at 1:30:00 will have an expiration at
     1:35:00.
@@ -65,16 +65,16 @@ SHOULD NOT be created in any other way.
 By `Cache` we refer to a object that implements the `Psr\Cache\CacheInterface`
 interface.
 
-Implementations MAY provide a mechanism for a user to specify a default TTL 
-if one is not specified for a specific cache item.  If no user-specified default 
-is provided implementations MUST default to the maximum legal value allowed by 
-the underlying implementation.  If the underlying implementation does not 
+Implementations MAY provide a mechanism for a user to specify a default TTL
+if one is not specified for a specific cache item.  If no user-specified default
+is provided implementations MUST default to the maximum legal value allowed by
+the underlying implementation.  If the underlying implementation does not
 support TTL, the user-specified TTL MUST be silently ignored.
 
 Implementations MUST accept keys that consist of up to 32 characters, containing
-the ASCII values A-Z, z-z, 0-9, _, ., and -.  That is the minimum requirement 
+the ASCII values A-Z, z-z, 0-9, _, ., and -.  That is the minimum requirement
 for keys is the regular expression [A-Z|a-z|0-9|\.|\-|\_]{1,32}.
-Implementations MAY allow additional characters or extended ASCCI-compatible 
+Implementations MAY allow additional characters or extended ASCCI-compatible
 character sets (such as UTF-8), but these characters MUST always be legal.
 
 2. Interfaces
@@ -92,23 +92,23 @@ interface CacheItemInterface
 {
 
     /**
-     * Get the key associated with this CacheItem
+     * Gets the key associated with this CacheItem.
      *
      * @return string
      */
     public function getKey();
 
     /**
-     * Obtain the value of this cache item
+     * Retrieves the stored value for this cache item.
      *
-     * @return mixed
+     * @return mixed  The saved value, or NULL if isHit() is False.
      */
     public function getValue();
 
     /**
-     * This boolean value tells us if our cache item is currently in the cache or not
+     * Returns whether or not this was a cache hit.
      *
-     * @return boolean
+     * @return boolean  True if the cache request found a value, False otherwise.
      */
     public function isHit();
 
@@ -130,72 +130,75 @@ interface CacheInterface
 {
 
     /**
-     * Here we pass in a cache key to be fetched from the cache.
-     * A CacheItem object will be constructed and returned to us
+     * Retrieves a value from the cache for the specified key.
      *
-     * @param string $key The unique key of this item in the cache
+     * @param string $key The unique key of this item in the cache.
      *
-     * @return CacheItemInterface The newly populated CacheItem class representing the stored data in the cache
+     * @return CacheItemInterface The newly populated CacheItem class representing the stored data in the cache.
      */
     public function get($key);
 
     /**
-     * Persisting our data in the cache, uniquely referenced by a key with an optional expiration TTL time.
+     * Persists data in the cache by the specified key.
      *
-     * @param string       $key   The key of the item to store
-     * @param mixed        $value The value of the item to store
-     * @param null|integer $ttl   Optional. The TTL value of this item. If no value is sent and the driver supports TTL
-     *                            then the library may set a default value for it or let the driver take care of that.
+     * @param string       $key   The key of the item to store.
+     * @param mixed        $value The value of the item to store.
+     * @param null|integer $ttl   Optional. The TTL value of this item. If not specified, it
+     *                            will default to the longest legal value or a
+     *                            previously-user-specified default value.
      *
-     * @return boolean
+     * @return boolean True if the value was successfully saved. False otherwise.
      */
     public function set($key, $value, $ttl = null);
 
     /**
-     * Remove an item from the cache by its unique key
+     * Removes an item from the cache by its unique key.
      *
-     * @param string $key The unique cache key of the item to remove
+     * @param string $key The unique cache key of the item to remove.
      *
-     * @return boolean    The result of the delete operation
+     * @return boolean    True if the value was removed or did not exist. False otherwise.
      */
     public function remove($key);
 
     /**
-     * Obtain multiple CacheItems by their unique keys
+     * Retrieves multiple values from the cache for the specified keys.
      *
-     * @param array $keys A list of keys that can obtained in a single operation.
+     * Note: The order of cache items returned is not guaranteed, and should not
+     * be relied upon.
      *
-     * @return array An array of CacheItem classes.
-     *               The resulting array must use the CacheItem's key as the associative key for the array.
+     * @param array $keys A list of keys to retrieve.
+     *
+     * @return array An associative array of CacheItem objects, keyed by cache key.
      */
-    public function getMultiple($keys);
+    public function getMultiple(array $keys);
 
     /**
-     * Persisting a set of key => value pairs in the cache, with an optional TTL.
+     * Persists multiple items in the cache at once.
      *
      * @param array        $items An array of key => value pairs for a multiple-set operation.
-     * @param null|integer $ttl   Optional. The TTL value of this item. If no value is sent and the driver supports TTL
-     *                            then the library may set a default value for it or let the driver take care of that.
+     * @param null|integer $ttl   Optional. The TTL value of all items. If not specified, it
+     *                            will default to the longest legal value or a
+     *                            previously-user-specified default value.
      *
-     * @return boolean The result of the multiple-set operation
+     * @return boolean True if all values were successfully saved. False otherwise.
      */
-    public function setMultiple($items, $ttl = null);
+    public function setMultiple(array $items, $ttl = null);
 
     /**
-     * Remove multiple cache items in a single operation
+     * Removes multiple cache items from the cache.
      *
-     * @param array $keys The array of keys to be removed
+     * @param array $keys The list of keys to be removed.
      *
      * @return array An array of 'key' => result, elements. Each array row has the key being deleted
-     *               and the result of that operation. The result will be a boolean of true or false
-     *               representing if the cache item was removed or not
+     *               and the result of that operation. The result will be True if the value was
+                     removed or did not exist or False otherwise.
      */
-    public function removeMultiple($keys);
+    public function removeMultiple(array $keys);
 
     /**
-     * This will wipe out the entire cache's keys
+     * Removes all cache items from the system.
      *
-     * @return boolean The result of the clear operation
+     * @return boolean True if the clear command was successful, False otherwise.
      */
     public function clear();
 
