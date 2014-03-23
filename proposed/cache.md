@@ -118,6 +118,11 @@ An Item represents a single key/value pair within a Pool. The key is the primary
 unique identifier for an Item and MUST be immutable. The Value MAY be changed
 at any time.
 
+### Collection
+
+A cache Collection is a series of cache items that are retrieved or saved together.
+A Collection returned by a Pool MAY lazy-load or lazy-instantiate Items or MAY
+load them all at once.
 
 ## Interfaces
 
@@ -159,10 +164,11 @@ interface PoolInterface
      *
      * @param array $keys
      *   An indexed array of keys of items to retrieve.
-     * @return \Traversable
-     *   A traversable collection of Cache Items in the same order as the $keys
-     *   parameter, keyed by the cache keys of each item. If no items are found
-     *   an empty Traversable collection will be returned.
+     * @return CollectionInterface
+     *   A traversable collection of Cache Items keyed by the cache keys of
+     *   each item. A Cache item will be returned for each key, even if that
+     *   key is not found. However, if no keys are specified then an empty
+     *   CollectionInterface object MUST be returned instead.
      */
     public function getItems(array $keys = array());
 
@@ -173,6 +179,16 @@ interface PoolInterface
      *   The current pool.
      */
     public function clear();
+
+    /**
+     * Removes multiple items from the pool.
+     *
+     * @param array $keys
+     *   An array of keys that should be removed from the pool.
+     * @return static
+     *   The invoked object.
+     */
+    public function deleteItems(array $keys);
 }
 
 ```
@@ -230,7 +246,7 @@ interface ItemInterface
     public function get();
 
     /**
-     * Stores a value into the cache.
+     * Sets the value represented by this cache item.
      *
      * The $value argument may be any item that can be serialized by PHP,
      * although the method of serialization is left up to the Implementing
@@ -251,11 +267,42 @@ interface ItemInterface
      *   - If no value is passed, a default value MAY be used. If none is set,
      *     the value should be stored permanently or for as long as the
      *     implementation allows.
-     * @return bool
+     * @return static
+     *   The invoked object.
+     */
+    public function set($value, $ttl = null);
+
+    /**
+     * Saves a value into the cache.
+     *
+     * The $value argument may be any item that can be serialized by PHP,
+     * although the method of serialization is left up to the Implementing
+     * Library.
+     *
+     * Calling this method with no parameters will persist the current value
+     * without changes.  Calling it with parameters is equivalent to calling
+     * set() with the same parameters, then persisting.  That is, the following
+     * lines have identical impact.
+     *
+     * $item->set('a value', 300)->save();
+     * $item->save('a value', 300);
+     *
+     * @param mixed $value
+     *   The serializable value to be stored.
+     * @param null $ttl
+     * @param int|\DateTime $ttl
+     *   - If an integer is passed, it is interpreted as the number of seconds
+     *     after which the item MUST be considered expired.
+     *   - If a DateTime object is passed, it is interpreted as the point in
+     *     time after which the the item MUST be considered expired.
+     *   - If no value is passed, a default value MAY be used. If none is set,
+     *     the value should be stored permanently or for as long as the
+     *     implementation allows.
+     * @return boolean
      *   Returns true if the item was successfully saved, or false if there was
      *   an error.
      */
-    public function set($value = null, $ttl = null);
+    public function save($value = null, $ttl = null);
 
     /**
      * Confirms if the cache item lookup resulted in a cache hit.
@@ -288,6 +335,28 @@ interface ItemInterface
     public function exists();
 }
 
+```
+
+### Cache\CollectionInterface
+
+A Collection object represents multiple cache items in an iterable form.
+
+```php
+<?php
+namespace Psr\Cache;
+
+interface CollectionInterface extends \Traversable, \ArrayAccess {
+
+    /**
+     * Saves all cache items in the collection.
+     *
+     * Implementing Libraries MAY make use of batch operations in their underlying
+     * storage engines or simply iterate over all items in the collection individually.
+     *
+     * @return boolean
+     *   True if all items were saved successfully, or false in caser of an error.
+     */
+    public function save();
 }
 
 ```
