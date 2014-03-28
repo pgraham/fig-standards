@@ -356,7 +356,7 @@ interface CollectionInterface extends \Traversable, \ArrayAccess {
      * storage engines or simply iterate over all items in the collection individually.
      *
      * @return boolean
-     *   True if all items were saved successfully, or false in caser of an error.
+     *   True if all items were saved successfully, or false in case of an error.
      */
     public function save();
 }
